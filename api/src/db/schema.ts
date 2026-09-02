@@ -4,6 +4,7 @@ import {
     char,
     check,
     date,
+    index,
     interval,
     pgTable,
     smallint,
@@ -11,8 +12,10 @@ import {
     time,
     timestamp,
     unique,
-    uuid
+    uuid,
 } from 'drizzle-orm/pg-core';
+import {tstzrange} from "./types.js";
+import {claimKind} from "./enums.js";
 
 /* Convenience Functions */
 
@@ -84,3 +87,19 @@ export const providerTemplate = pgTable("provider_template", {
     check("ck_start_less_than_end", sql`${t.startsAt} < ${t.endsAt}`)
 ]);
 
+export const timeClaim = pgTable("time_claim", {
+    id: _id(),
+    providerId: uuid("provider_id").notNull().references(() => provider.id),
+    during: tstzrange("during").notNull(),
+    kind: claimKind("kind").notNull(),
+    description: text("description"),
+    createdBy: text("created_by").notNull(), // 'staff:<id>' | 'patient:<id>' | 'system
+    createdAt: _createdAt(),
+    updatedAt: _updatedAt(),
+    expiresAt: timestamp("expires_at", {withTimezone: true}),
+    releasedAt: timestamp("released_at", {withTimezone: true}),
+}, t => [
+    check("ck_only_holds_expire", sql`${t.kind} = 'hold' OR ${t.expiresAt} IS NULL`),
+    check("ck_non_appointments_described", sql`${t.kind} = 'appointment' OR ${t.description} IS NOT NULL`),
+    index("ix_time_claim_expiring").on(t.expiresAt).where(sql`${t.releasedAt} IS NULL AND ${t.expiresAt} IS NOT NULL`)
+]);

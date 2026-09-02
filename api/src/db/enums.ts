@@ -10,4 +10,12 @@ export const offerState = pgEnum(
     ["offered", "accepted", "declined", "expired", "revoked"]
 );
 
+export const claimKind = pgEnum(
+    "claim_kind",
+    ["appointment", "hold", "time_off", "admin"]
+);
 
+export const appointmentStatus = pgEnum(
+    "appointment_status",
+    ["scheduled", "confirmed", "arrived", "roomed", "completed", "canceled", "no_show", "bumped"]
+);
