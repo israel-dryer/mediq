@@ -7,15 +7,16 @@ import {
     index,
     interval,
     pgTable,
+    primaryKey,
     smallint,
     text,
     time,
     timestamp,
     unique,
-    uuid,
+    uuid
 } from 'drizzle-orm/pg-core';
 import {tstzrange} from "./types.js";
-import {appointmentStatus, claimKind, appointmentOrigin} from "./enums.js";
+import {actorKind, appointmentOrigin, appointmentStatus, claimKind} from "./enums.js";
 
 /* Convenience Functions */
 
@@ -115,3 +116,15 @@ export const appointment = pgTable("appointment", {
     createdAt: _createdAt(),
     updatedAt: _updatedAt(),
 });
+
+export const appointmentTransition = pgTable("appointment_transition", {
+        fromStatus: appointmentStatus("from_status").notNull(),
+        toStatus: appointmentStatus("to_status").notNull(),
+        actor: actorKind("actor").notNull()
+    }, t => [
+        primaryKey({
+            name: "pk_appointment_transition",
+            columns: [t.fromStatus, t.toStatus, t.actor],
+        })
+    ]
+);

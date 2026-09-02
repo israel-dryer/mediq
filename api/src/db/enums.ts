@@ -24,3 +24,8 @@ export const appointmentOrigin = pgEnum(
     "appointment_origin",
     ["patient", "staff"]
 );
+
+export const actorKind = pgEnum(
+    "actor_kind",
+    ["patient", "staff", "system"]
+);

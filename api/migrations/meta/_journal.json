@@ -36,6 +36,13 @@
       "when": 1788381630948,
       "tag": "0004_release_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788386558023,
+      "tag": "0005_flowery_bill_hollister",
+      "breakpoints": true
     }
   ]
 }
