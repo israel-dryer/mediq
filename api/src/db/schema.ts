@@ -15,7 +15,7 @@ import {
     uuid,
 } from 'drizzle-orm/pg-core';
 import {tstzrange} from "./types.js";
-import {claimKind} from "./enums.js";
+import {appointmentStatus, claimKind, appointmentOrigin} from "./enums.js";
 
 /* Convenience Functions */
 
@@ -103,3 +103,15 @@ export const timeClaim = pgTable("time_claim", {
     check("ck_non_appointments_described", sql`${t.kind} = 'appointment' OR ${t.description} IS NOT NULL`),
     index("ix_time_claim_expiring").on(t.expiresAt).where(sql`${t.releasedAt} IS NULL AND ${t.expiresAt} IS NOT NULL`)
 ]);
+
+export const appointment = pgTable("appointment", {
+    id: _id(),
+    timeClaimId: uuid("time_claim_id").notNull().unique().references(() => timeClaim.id),
+    patientId: uuid("patient_id").notNull().references(() => patient.id),
+    locationId: uuid("location_id").notNull().references(() => location.id),
+    typeId: uuid("type_id").notNull().references(() => appointmentType.id),
+    status: appointmentStatus("status").notNull().default("scheduled"),
+    origin: appointmentOrigin("origin").notNull(),
+    createdAt: _createdAt(),
+    updatedAt: _updatedAt(),
+});

@@ -19,3 +19,8 @@ export const appointmentStatus = pgEnum(
     "appointment_status",
     ["scheduled", "confirmed", "arrived", "roomed", "completed", "canceled", "no_show", "bumped"]
 );
+
+export const appointmentOrigin = pgEnum(
+    "appointment_origin",
+    ["patient", "staff"]
+);

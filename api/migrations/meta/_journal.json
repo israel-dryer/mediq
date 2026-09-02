@@ -22,6 +22,20 @@
       "when": 1788353958250,
       "tag": "0002_no_overlap",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788381522326,
+      "tag": "0003_remarkable_catseye",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788381630948,
+      "tag": "0004_release_triggers",
+      "breakpoints": true
     }
   ]
 }
