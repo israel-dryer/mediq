@@ -43,6 +43,13 @@
       "when": 1788386558023,
       "tag": "0005_flowery_bill_hollister",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788390819972,
+      "tag": "0006_transition_triggers",
+      "breakpoints": true
     }
   ]
 }
