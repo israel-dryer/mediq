@@ -50,6 +50,13 @@
       "when": 1788390819972,
       "tag": "0006_transition_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788392558547,
+      "tag": "0007_transition_rules",
+      "breakpoints": true
     }
   ]
 }
