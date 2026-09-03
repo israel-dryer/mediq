@@ -9,5 +9,6 @@ try {
     console.log('migrations applied');
 } catch (e) {
     console.error(e);
+    process.exitCode = 1;
 }
 await pool.end();
