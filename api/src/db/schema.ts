@@ -13,10 +13,11 @@ import {
     time,
     timestamp,
     unique,
-    uuid
+    uniqueIndex,
+    uuid,
 } from 'drizzle-orm/pg-core';
 import {tstzrange} from "./types.js";
-import {actorKind, appointmentOrigin, appointmentStatus, claimKind} from "./enums.js";
+import {actorKind, appointmentOrigin, appointmentStatus, asapState, claimKind, offerState} from "./enums.js";
 
 /* Convenience Functions */
 
@@ -128,3 +129,38 @@ export const appointmentTransition = pgTable("appointment_transition", {
         })
     ]
 );
+
+export const asapRequest = pgTable("asap_request", {
+    id: _id(),
+    patientId: uuid("patient_id").notNull().references(() => patient.id),
+    appointmentId: uuid("appointment_id").notNull().references(() => appointment.id),
+    earliestDate: date("earliest_date"),
+    latestDate: date("latest_date"),
+    earliestTime: time("earliest_time"),
+    latestTime: time("latest_time"),
+    allowedIsodow: smallint("allowed_isodow").array(), // NULL = any day
+    priorityKey: timestamp("priority_key", {withTimezone: true}).notNull().defaultNow(),
+    missCount: smallint("miss_count").notNull().default(0),
+    state: asapState("state").notNull().default("active"),
+    createdAt: _createdAt(),
+    updatedAt: _updatedAt(),
+}, t => [
+    check('ck_allowed_isodow_valid', sql`${t.allowedIsodow} <@ ARRAY[1,2,3,4,5,6,7]::smallint[]`),
+    uniqueIndex("ux_asap_one_live_per_appointment").on(t.appointmentId).where(sql`${t.state} IN ('active', 'offered')`),
+    check("ck_earliest_time_lt_latest", sql`${t.earliestTime} < ${t.latestTime}`),
+    check("ck_earliest_date_lte_latest", sql`${t.earliestDate} <= ${t.latestDate}`)
+]);
+
+export const slotOffer = pgTable("slot_offer", {
+    id: _id(),
+    asapRequestId: uuid("asap_request_id").notNull().references(() => asapRequest.id),
+    timeClaimId: uuid("time_claim_id").notNull().unique().references(() => timeClaim.id),
+    state: offerState("state").notNull().default("offered"),
+    expiresAt: timestamp("expires_at", {withTimezone: true}).notNull(),
+    respondedAt: timestamp("responded_at", {withTimezone: true}),
+    createdAt: _createdAt(),
+    updatedAt: _updatedAt(),
+}, t => [
+    uniqueIndex("ux_one_live_offer").on(t.asapRequestId).where(sql`${t.state} = 'offered'`)
+]);
+
