@@ -7,7 +7,7 @@ export const asapState = pgEnum(
 
 export const offerState = pgEnum(
     "offer_state",
-    ["offered", "accepted", "declined", "expired", "revoked"]
+    ["offered", "accepted", "declined", "expired"]
 );
 
 export const claimKind = pgEnum(
