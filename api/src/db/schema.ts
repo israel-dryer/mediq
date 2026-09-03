@@ -17,7 +17,15 @@ import {
     uuid,
 } from 'drizzle-orm/pg-core';
 import {tstzrange} from "./types.js";
-import {actorKind, appointmentOrigin, appointmentStatus, asapState, claimKind, offerState} from "./enums.js";
+import {
+    actorKind,
+    appointmentOrigin,
+    appointmentStatus,
+    asapState,
+    claimKind,
+    messageChannel, messageKind,
+    offerState
+} from "./enums.js";
 
 /* Convenience Functions */
 
@@ -164,3 +172,15 @@ export const slotOffer = pgTable("slot_offer", {
     uniqueIndex("ux_one_live_offer").on(t.asapRequestId).where(sql`${t.state} = 'offered'`)
 ]);
 
+export const messageLog = pgTable("message_log", {
+    id: _id(),
+    patientId: uuid("patient_id").notNull().references(() => patient.id),
+    appointmentId: uuid("appointment_id").notNull().references(() => appointment.id),
+    slotOfferId: uuid("slot_offer_id").references(() => slotOffer.id),
+    kind: messageKind("kind").notNull(),
+    channel: messageChannel("channel").notNull(),
+    body: text("body").notNull(),
+    createdAt: _createdAt()
+}, t => [
+    unique("ux_message_once").on(t.appointmentId, t.kind, t.slotOfferId).nullsNotDistinct()
+]);

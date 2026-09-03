@@ -29,3 +29,17 @@ export const actorKind = pgEnum(
     "actor_kind",
     ["patient", "staff", "system"]
 );
+
+export const messageKind = pgEnum(
+    "message_kind",
+    [
+        "booking_confirmation", "reminder_7d", "reminder_1d", "cancellation_confirmation",
+        "asap_offer", "asap_offer_expired", "asap_withdrawn", "reschedule_confirmation"
+    ]
+);
+
+export const messageChannel = pgEnum(
+    "message_channel",
+    ["sms", "email"]
+);
+
