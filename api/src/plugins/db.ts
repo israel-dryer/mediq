@@ -1,13 +1,9 @@
 import fp from 'fastify-plugin';
-import pg from 'pg';
-import {drizzle} from 'drizzle-orm/node-postgres';
-import * as schema from '../db/schema.js';
+import {createPool} from "../db/index.js";
 
 export default fp(async app => {
-    const pool = new pg.Pool({connectionString: process.env.DATABASE_URL});
-    const db = drizzle(pool, {schema});
-
-    app.decorate('db', db);
+    const pool = createPool(process.env.DATABASE_URL!);
+    app.decorate('db', pool);
     app.addHook('onClose', async () => {
         await pool.end();
     });
@@ -15,6 +11,6 @@ export default fp(async app => {
 
 declare module 'fastify' {
     interface FastifyInstance {
-        db: ReturnType<typeof drizzle<typeof schema>>;
+        db: import('pg').Pool
     }
 }
