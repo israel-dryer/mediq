@@ -1,4 +1,5 @@
 import fp from 'fastify-plugin';
+import type { Pool } from 'pg';
 import {createPool} from "../db/index.js";
 
 export default fp(async app => {
@@ -11,6 +12,6 @@ export default fp(async app => {
 
 declare module 'fastify' {
     interface FastifyInstance {
-        db: import('pg').Pool
+        db: Pool
     }
 }
