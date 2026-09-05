@@ -2,6 +2,7 @@
 -- Anchor window: 2026-03-04 .. 2027-03-03 (anchor 'today' = 2026-09-02, a Wednesday). Shifted to the current week on apply.
 -- All wall-clock times America/New_York. Re-runnable: truncates demo tables first.
 BEGIN;
+select set_config('mediq.actor', 'system', false);
 SET LOCAL timezone = 'America/New_York';
 
 -- Shift helpers: move the anchor week (Mon 2026-08-31) onto the current week, whole weeks only.
