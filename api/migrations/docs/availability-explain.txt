@@ -1,0 +1,111 @@
+# availability() — EXPLAIN (ANALYZE, BUFFERS)
+# Postgres 16.13 (uuidv7 shimmed), seed as of 2026-09-05: 12,693 claims, 34 template blocks.
+# One provider (Allen Smith), 2026-09-07..2026-09-20, 40 minutes, p_now = now().
+
+## Before: 'free as (' — correlated claim subquery re-evaluated per grid candidate (SubPlan, loops=420)
+                                                                                                                                                                            QUERY PLAN                                                                                                                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort (actual rows=1 loops=1)
+   Sort Key: t.provider_id, s.s
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=7569
+   ->  Nested Loop (actual rows=1 loops=1)
+         Buffers: shared hit=7563
+         ->  Nested Loop (actual rows=20 loops=1)
+               Buffers: shared hit=3
+               ->  GroupAggregate (actual rows=1 loops=1)
+                     Buffers: shared hit=3
+                     ->  Nested Loop (actual rows=20 loops=1)
+                           Buffers: shared hit=3
+                           ->  Index Scan using location_pkey on location l (actual rows=1 loops=1)
+                                 Index Cond: (id = '4e8543d3-28d0-5a8a-84c4-c9fa9f74a7f7'::uuid)
+                                 Buffers: shared hit=2
+                           ->  Hash Join (actual rows=20 loops=1)
+                                 Hash Cond: (EXTRACT(isodow FROM d.d) = (t.isodow)::numeric)
+                                 Buffers: shared hit=1
+                                 ->  Function Scan on generate_series d (actual rows=14 loops=1)
+                                 ->  Hash (actual rows=10 loops=1)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                       Buffers: shared hit=1
+                                       ->  Seq Scan on provider_template t (actual rows=10 loops=1)
+                                             Filter: ((location_id = '4e8543d3-28d0-5a8a-84c4-c9fa9f74a7f7'::uuid) AND (provider_id = '9f1c22d8-8296-548a-8d9d-a0de649562a6'::uuid))
+                                             Rows Removed by Filter: 24
+                                             Buffers: shared hit=1
+               ->  Function Scan on unnest blk (actual rows=20 loops=1)
+         ->  Function Scan on generate_series s (actual rows=0 loops=20)
+               Filter: (tstzrange(s, (s + '00:40:00'::interval), '[)'::text) <@ (((range_agg(tstzrange((((d.d)::date + t.starts_at) AT TIME ZONE l.timezone), (((d.d)::date + t.ends_at) AT TIME ZONE l.timezone), '[)'::text))) - COALESCE((SubPlan 1), '{}'::tstzmultirange)) - (tstzrange(NULL::timestamp with time zone, now(), '[)'::text))::tstzmultirange))
+               Rows Removed by Filter: 21
+               Buffers: shared hit=7560
+               SubPlan 1
+                 ->  Aggregate (actual rows=1 loops=420)
+                       Buffers: shared hit=7560
+                       ->  Bitmap Heap Scan on time_claim tc (actual rows=159 loops=420)
+                             Recheck Cond: ((provider_id = t.provider_id) AND (during && (range_agg(tstzrange((((d.d)::date + t.starts_at) AT TIME ZONE l.timezone), (((d.d)::date + t.ends_at) AT TIME ZONE l.timezone), '[)'::text)))) AND (released_at IS NULL))
+                             Filter: ((expires_at IS NULL) OR (expires_at > now()))
+                             Heap Blocks: exact=4200
+                             Buffers: shared hit=7560
+                             ->  Bitmap Index Scan on no_overlap (actual rows=159 loops=420)
+                                   Index Cond: ((provider_id = t.provider_id) AND (during && (range_agg(tstzrange((((d.d)::date + t.starts_at) AT TIME ZONE l.timezone), (((d.d)::date + t.ends_at) AT TIME ZONE l.timezone), '[)'::text)))))
+                                   Buffers: shared hit=3360
+ Planning:
+   Buffers: shared hit=1270
+ Planning Time: 3.327 ms
+ Execution Time: 480.414 ms
+(46 rows)
+
+
+## After: 'free as materialized (' — claim subquery evaluated once per provider (loops=1)
+                                                                                   QUERY PLAN                                                                                    
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort (actual rows=1 loops=1)
+   Sort Key: f.provider_id, s.s
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=27
+   CTE free
+     ->  Subquery Scan on w (actual rows=1 loops=1)
+           Buffers: shared hit=21
+           ->  GroupAggregate (actual rows=1 loops=1)
+                 Buffers: shared hit=3
+                 ->  Nested Loop (actual rows=20 loops=1)
+                       Buffers: shared hit=3
+                       ->  Index Scan using location_pkey on location l (actual rows=1 loops=1)
+                             Index Cond: (id = '4e8543d3-28d0-5a8a-84c4-c9fa9f74a7f7'::uuid)
+                             Buffers: shared hit=2
+                       ->  Hash Join (actual rows=20 loops=1)
+                             Hash Cond: (EXTRACT(isodow FROM d.d) = (t.isodow)::numeric)
+                             Buffers: shared hit=1
+                             ->  Function Scan on generate_series d (actual rows=14 loops=1)
+                             ->  Hash (actual rows=10 loops=1)
+                                   Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                   Buffers: shared hit=1
+                                   ->  Seq Scan on provider_template t (actual rows=10 loops=1)
+                                         Filter: ((location_id = '4e8543d3-28d0-5a8a-84c4-c9fa9f74a7f7'::uuid) AND (provider_id = '9f1c22d8-8296-548a-8d9d-a0de649562a6'::uuid))
+                                         Rows Removed by Filter: 24
+                                         Buffers: shared hit=1
+           SubPlan 1
+             ->  Aggregate (actual rows=1 loops=1)
+                   Buffers: shared hit=18
+                   ->  Bitmap Heap Scan on time_claim tc (actual rows=159 loops=1)
+                         Recheck Cond: ((provider_id = w.provider_id) AND (during && w.hours) AND (released_at IS NULL))
+                         Filter: ((expires_at IS NULL) OR (expires_at > now()))
+                         Heap Blocks: exact=10
+                         Buffers: shared hit=18
+                         ->  Bitmap Index Scan on no_overlap (actual rows=159 loops=1)
+                               Index Cond: ((provider_id = w.provider_id) AND (during && w.hours))
+                               Buffers: shared hit=8
+   ->  Nested Loop (actual rows=1 loops=1)
+         Buffers: shared hit=21
+         ->  Nested Loop (actual rows=20 loops=1)
+               Buffers: shared hit=21
+               ->  CTE Scan on free f (actual rows=1 loops=1)
+                     Buffers: shared hit=21
+               ->  Function Scan on unnest blk (actual rows=20 loops=1)
+         ->  Function Scan on generate_series s (actual rows=0 loops=20)
+               Filter: (tstzrange(s, (s + '00:40:00'::interval), '[)'::text) <@ f.open)
+               Rows Removed by Filter: 21
+ Planning:
+   Buffers: shared hit=1270
+ Planning Time: 3.059 ms
+ Execution Time: 1.675 ms
+(50 rows)
+
