@@ -1,11 +1,11 @@
 import pg from 'pg';
+import {ActorKind} from "../schemas/enums.js";
 
 // timestampz (1184) and timestamp (1114): keep the ISO string Postgres sent
 pg.types.setTypeParser(1184, s => s);
 pg.types.setTypeParser(1114, s => s);
 
 export type Db = pg.Pool | pg.PoolClient;
-export type ActorKind = 'patient' | 'staff' | 'system';
 
 export function createPool(connectionString: string) {
     return new pg.Pool({connectionString});
