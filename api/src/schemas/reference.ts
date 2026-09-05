@@ -1,5 +1,5 @@
 import Type from "typebox";
-import {Nullable, TimeOfDay, Uuid} from "./common.js";
+import {DateOnly, Instant, Nullable, TimeOfDay, Uuid} from "./common.js";
 
 export const Location = Type.Object({
     id: Uuid,
@@ -25,7 +25,7 @@ export type TemplateBlock = Type.Static<typeof TemplateBlock>;
 export const ProviderStaff = Type.Object({
     ...ProviderBase.properties,
     npi: Nullable(Type.String()),
-    template: Type.Array(TemplateBlock)
+    template: Type.Optional(Type.Array(TemplateBlock))
 });
 export type ProviderStaff = Type.Static<typeof ProviderStaff>;
 
@@ -33,6 +33,28 @@ export const AppointmentType = Type.Object({
     id: Uuid,
     code: Type.String(),
     description: Type.String(),
-    durationMinutes: Type.Integer({minimum: 1})
+    durationMinutes: Type.Integer({minimum: 10})
 });
 export type AppointmentType = Type.Static<typeof AppointmentType>;
+
+export const AvailabilityQuery = Type.Object({
+    typeId: Uuid,
+    from: DateOnly,
+    to: DateOnly,
+    providerId: Type.Optional(Uuid)
+}, {additionalProperties: false});
+export type AvailabilityQuery = Type.Static<typeof AvailabilityQuery>;
+
+export const AvailabilitySlot = Type.Object({
+    providerId: Uuid,
+    start: Instant
+});
+export type AvailabilitySlot = Type.Static<typeof AvailabilitySlot>;
+
+export const Availability = Type.Object({
+    from: DateOnly,
+    to: DateOnly,
+    durationMinutes: Type.Integer({minimum: 10}),
+    slots: Type.Array(AvailabilitySlot)
+});
+export type Availability = Type.Static<typeof Availability>;
