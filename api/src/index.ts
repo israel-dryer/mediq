@@ -1,6 +1,5 @@
 import 'dotenv/config';
-import Fastify from 'fastify';
+import {buildApp} from "./app.js";
 
-const app = Fastify({logger: true});
-app.get('/health', async () => ({ok: true}));
-app.listen({port: 3000});
+const app = await buildApp();
+void app.listen({port: 3000});
