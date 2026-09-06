@@ -18,17 +18,24 @@ create table appointment_event
 
 create index ix_appointment_event_appointment on appointment_event (appointment_id, at);
 
-create or replace function appointment_event_actor() returns actor_kind as
-$$
-select current_setting('mediq.actor', true)::actor_kind;
-$$ language sql;
-
 create or replace function log_appointment_created() returns trigger as
 $$
 begin
     insert into appointment_event (appointment_id, actor, kind, to_status, to_claim_id)
     values (new.id, appointment_event_actor(), 'created', new.status, new.time_claim_id);
     return null;
+end;
+$$ language plpgsql;
+
+create or replace function appointment_event_actor() returns actor_kind as
+$$
+declare
+    v_actor text := nullif(current_setting('mediq.actor', true), '');
+begin
+    if v_actor is null then
+        raise exception 'mediq.actor not set' using errcode = 'check_violation';
+    end if;
+    return v_actor::actor_kind;
 end;
 $$ language plpgsql;
 
