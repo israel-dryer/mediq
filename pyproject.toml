@@ -1,0 +1,16 @@
+[project]
+name = "mediq"
+version = "0.1.0"
+description = "A scheduling core as a Postgres project: constraints, functions, and the tests that race them."
+requires-python = ">=3.12"
+dependencies = [
+    "psycopg[binary]>=3.12",
+    "python-dotenv>=1.0"
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
